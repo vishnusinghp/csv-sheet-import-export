@@ -1,0 +1,43 @@
+/// data import in ci using csv
+
+$owner_id = $this->session->userdata('owner_id');
+
+if (!is_dir('uploads/csv/' . $owner_id)){
+  mkdir('./uploads/csv/' . $owner_id, 0777, true);
+  $dir_exist = false; // dir not exist
+}
+
+$temp = explode(".", $_FILES["file"]["name"]);
+
+$newfilename = round(microtime(true)) . '.' . end($temp);
+$target_path = "uploads/csv/". $owner_id."/". $newfilename; 
+
+
+if(move_uploaded_file($_FILES["file"]["tmp_name"], $target_path)) {
+     $csv_file="uploads/csv/".$owner_id."/".$newfilename;
+     $this->session->set_userdata('csvfilename',$csv_file);
+     $worksheet=array();
+     if (($getfile = fopen($csv_file, "r")) !== FALSE){
+          $worksheet[] = fgetcsv($getfile, 50000000, ",");
+          while (($row = fgetcsv($getfile, 50000000, ",")) !== FALSE) 
+          {
+              $worksheet[]=$row; // csv rows collection
+          }  
+      }
+     $j=count($worksheet[0]);
+     for ($i=0;$i<$j;$i++){
+          if((str_replace(array(',', ' '), '', $worksheet[0][$i]) != ''))
+          {
+             echo '<option value="'.$worksheet[0][$i].'">'.$worksheet[0][$i].'</option>';
+          }
+      }
+    $this->load->model('import_export_model');
+    $data = array(
+                    'owner_id' => $owner_id ,
+                    'staff_id' => get_staff_user_id(),
+                    'file_path'=> $csv_file,
+                  );
+
+     $last_csv_id = $this->import_export_model->csv_upload($data);
+     $this->session->set_userdata('csvid',$last_csv_id);
+}
