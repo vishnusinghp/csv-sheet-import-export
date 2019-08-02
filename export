@@ -1,0 +1,33 @@
+$end_date="2100-12-31";
+$start_date="2015-01-01";
+
+$exdata=array('end_date' =>$end_date,'start_date'=>$start_date,'staff_list'=>$staff_list);
+
+$ranklist = $this->rankers_data($data['staff'],$exdata);
+usort($ranklist,"sortByRevenue");
+$rankers=array_reverse($ranklist); 
+
+$datas[] = array("Name","Revenue","Deals","Calls","Task","% to Budget/Goal","Budget/Goal");
+header("Content-type: application/csv");
+header("Content-Disposition: attachment; filename=\"rankers data".".csv\"");
+header("Pragma: no-cache");
+header("Expires: 0");
+
+$handle = fopen('php://output', 'w');
+
+foreach ($datas as $data) {
+fputcsv($handle, $data);
+}
+
+foreach ($rankers as $ranker) {
+$budget = ($ranker['budget']!='0') ? $ranker['budget']:1;
+$budget = round(($ranker['revenue']/$budget)*100,2);
+
+$details =array($ranker['firstname'].' '.$ranker['lastname'],$ranker['revenue'],$ranker['deal'],$ranker['call'],$ranker['task'],$budget.'%',$ranker['budget']);
+fputcsv($handle, $details);
+
+}
+
+fclose($handle);
+
+exit;   
